@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, type Client } from "discord.js";
-import { commands } from "../commands";
+import { commands } from "~/commands";
 
 export const ready = async (client: Client) => {
 	console.log(`Logged in as ${client.user?.tag}!`);

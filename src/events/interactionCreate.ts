@@ -1,9 +1,9 @@
 import type { Client } from "discord.js";
-import { commands } from "../commands";
+import { commands } from "~/commands";
 
 export const interactionCreate = async (client: Client) => {
 	client.on("interactionCreate", async (interaction) => {
-		if (!interaction.isCommand()) return;
+		if (!interaction.isChatInputCommand()) return;
 
 		const command = commands.find(
 			(cmd) => cmd.name === interaction.commandName,
