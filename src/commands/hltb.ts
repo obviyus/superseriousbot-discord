@@ -21,7 +21,6 @@ export const HowLongToBeatCommand: Command = {
 		await interaction.deferReply();
 
 		try {
-			// Use the HowLongToBeat class to fetch search results
 			const searchResults = await hltb.search(gameName);
 
 			// Handle case where no results are found
@@ -35,7 +34,6 @@ export const HowLongToBeatCommand: Command = {
 				return;
 			}
 
-			// Process the first game result
 			const game = searchResults.Results[0];
 
 			// Helper function to format time
@@ -44,7 +42,6 @@ export const HowLongToBeatCommand: Command = {
 				return `${time} hours`;
 			};
 
-			// Create and send the embed
 			const gameEmbed = new EmbedBuilder()
 				.setColor(0x0099ff)
 				.setTitle(game.name)

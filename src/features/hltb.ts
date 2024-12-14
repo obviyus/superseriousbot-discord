@@ -32,19 +32,31 @@ class HowLongToBeat {
 	private static readonly SEARCH_URL = `${HowLongToBeat.BASE_URL}/api/find`;
 	private static readonly GAME_URL = `${HowLongToBeat.BASE_URL}/game`;
 
-	private apiKey: string | null = null;
-	private static readonly CACHE_DURATION = 24 * 60 * 60 * 1000;
-	private apiKeyTimestamp: number | null = null;
+	private static readonly API_KEY_CACHE: {
+		key: string | null;
+		timestamp: number | null;
+	} = {
+		key: null,
+		timestamp: null,
+	};
+
+	private static readonly CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
 	private isApiKeyExpired(): boolean {
-		if (!this.apiKey || !this.apiKeyTimestamp) return true;
-		return Date.now() - this.apiKeyTimestamp > HowLongToBeat.CACHE_DURATION;
+		const { key, timestamp } = HowLongToBeat.API_KEY_CACHE;
+		if (!key || !timestamp) return true;
+		return Date.now() - timestamp > HowLongToBeat.CACHE_DURATION;
 	}
 
 	private async refreshApiKey(): Promise<void> {
-		this.apiKey =
+		const newKey =
 			(await this.fetchApiKey(false)) || (await this.fetchApiKey(true));
-		this.apiKeyTimestamp = Date.now();
+		HowLongToBeat.API_KEY_CACHE.key = newKey;
+		HowLongToBeat.API_KEY_CACHE.timestamp = Date.now();
+	}
+
+	private get apiKey(): string | null {
+		return HowLongToBeat.API_KEY_CACHE.key;
 	}
 
 	private getHeaders(): HeadersInit {
@@ -158,7 +170,7 @@ class HowLongToBeat {
 
 				const apiKey = await this.extractApiFromScript(scriptContent);
 				if (apiKey) {
-					this.apiKey = apiKey;
+					HowLongToBeat.API_KEY_CACHE.key = apiKey;
 					return apiKey;
 				}
 			}
