@@ -8,7 +8,7 @@ enum SearchModifiers {
 	HIDE_DLC = "hide_dlc",
 }
 
-interface GameResult {
+export interface GameResult {
 	id: string;
 	name: string;
 	mainStory: number | null;

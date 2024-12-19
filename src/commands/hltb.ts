@@ -1,8 +1,70 @@
-import { EmbedBuilder, type SlashCommandBuilder } from "discord.js";
-import { HowLongToBeat } from "~/features/hltb";
+import {
+	ActionRowBuilder,
+	StringSelectMenuBuilder,
+	EmbedBuilder,
+	type SlashCommandBuilder,
+} from "discord.js";
+import { HowLongToBeat, type GameResult } from "~/features/hltb";
 import type { Command } from "~/commands";
 
+const COLORS = {
+	ERROR: 0xff0000,
+	PRIMARY: 0x0099ff,
+} as const;
+
+const MAX_RESULTS = 10;
 const hltb = new HowLongToBeat();
+
+function createGameEmbed(game: GameResult): EmbedBuilder {
+	const formatTime = (time: number | null): string =>
+		time === null ? "N/A" : `${time} hours`;
+
+	return new EmbedBuilder()
+		.setColor(COLORS.PRIMARY)
+		.setTitle(game.name)
+		.addFields(
+			{
+				name: "⚔️ Main Story",
+				value: formatTime(game.mainStory),
+				inline: true,
+			},
+			{
+				name: "🎮 Main + Extras",
+				value: formatTime(game.extras),
+				inline: true,
+			},
+			{
+				name: "🏆 Completionist",
+				value: formatTime(game.completionist),
+				inline: true,
+			},
+			{
+				name: "📱 Platforms",
+				value: game.platforms.length ? game.platforms.join(", ") : "N/A",
+				inline: false,
+			},
+		)
+		.setTimestamp();
+}
+
+function createGameSelector(
+	games: GameResult[],
+): ActionRowBuilder<StringSelectMenuBuilder> {
+	const selectMenu = new StringSelectMenuBuilder()
+		.setCustomId("select_game")
+		.setPlaceholder("Choose a game")
+		.addOptions(
+			games.map((game) => ({
+				label: game.name,
+				description: game.platforms.join(", ") || "No platforms listed",
+				value: game.id.toString(),
+			})),
+		);
+
+	return new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+		selectMenu,
+	);
+}
 
 export const HowLongToBeatCommand: Command = {
 	name: "hltb",
@@ -15,75 +77,68 @@ export const HowLongToBeatCommand: Command = {
 				.setRequired(true),
 		) as SlashCommandBuilder,
 	execute: async (interaction) => {
-		const options = interaction.options;
-		const gameName = options.getString("game", true);
-
 		await interaction.deferReply();
+		const gameName = interaction.options.getString("game", true);
 
 		try {
 			const searchResults = await hltb.search(gameName);
 
-			// Handle case where no results are found
 			if (searchResults.Results.length === 0) {
-				const notFoundEmbed = new EmbedBuilder()
-					.setColor(0xff0000)
-					.setTitle("No Results Found")
-					.setDescription(`No results found for "${gameName}"`);
-
-				await interaction.editReply({ embeds: [notFoundEmbed] });
+				await interaction.editReply({
+					embeds: [
+						new EmbedBuilder()
+							.setColor(COLORS.ERROR)
+							.setTitle("No Results Found")
+							.setDescription(`No results found for "${gameName}"`),
+					],
+				});
 				return;
 			}
 
-			const game = searchResults.Results[0];
+			const topResults = searchResults.Results.slice(0, MAX_RESULTS);
+			const reply = await interaction.editReply({
+				embeds: [
+					new EmbedBuilder()
+						.setColor(COLORS.PRIMARY)
+						.setTitle("Search Results")
+						.setDescription("Choose a game from the dropdown below."),
+				],
+				components: [createGameSelector(topResults)],
+			});
 
-			// Helper function to format time
-			const formatTime = (time: number | null): string => {
-				if (time === null) return "N/A";
-				return `${time} hours`;
-			};
+			// Single collector with auto-cleanup
+			const selection = await reply
+				.awaitMessageComponent({
+					filter: (i) => i.user.id === interaction.user.id,
+					// Component will auto-invalidate after 15 minutes anyway
+					time: 15 * 60 * 1000,
+				})
+				.catch(() => null);
 
-			const gameEmbed = new EmbedBuilder()
-				.setColor(0x0099ff)
-				.setTitle(game.name)
-				.addFields(
-					{
-						name: "⚔️ Main Story",
-						value: formatTime(game.mainStory),
-						inline: true,
-					},
-					{
-						name: "🎮 Main + Extras",
-						value: formatTime(game.extras),
-						inline: true,
-					},
-					{
-						name: "🏆 Completionist",
-						value: formatTime(game.completionist),
-						inline: true,
-					},
-					{
-						name: "📱 Platforms",
-						value: game.platforms.length ? game.platforms.join(", ") : "N/A",
-						inline: false,
-					},
-				)
-				.setTimestamp();
-
-			await interaction.editReply({ embeds: [gameEmbed] });
+			if (selection?.isStringSelectMenu()) {
+				const selectedGame = topResults.find(
+					(game) => game.id.toString() === selection.values[0],
+				);
+				if (selectedGame) {
+					await selection.update({
+						embeds: [createGameEmbed(selectedGame)],
+						components: [], // Remove the select menu
+					});
+				}
+			}
 		} catch (error) {
 			console.error("Error fetching game data:", error);
-
-			// Handle errors gracefully with an error embed
-			const errorEmbed = new EmbedBuilder()
-				.setColor(0xff0000)
-				.setTitle("Error")
-				.setDescription(
-					"An error occurred while fetching game data. Please try again later.",
-				)
-				.setTimestamp()
-				.setFooter({ text: "Powered by HowLongToBeat" });
-
-			await interaction.editReply({ embeds: [errorEmbed] });
+			await interaction.editReply({
+				embeds: [
+					new EmbedBuilder()
+						.setColor(COLORS.ERROR)
+						.setTitle("Error")
+						.setDescription(
+							"An error occurred while fetching game data. Please try again later.",
+						)
+						.setTimestamp(),
+				],
+			});
 		}
 	},
 };
