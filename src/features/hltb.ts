@@ -29,7 +29,7 @@ interface SearchResponse {
 class HowLongToBeat {
 	private static readonly BASE_URL = "https://howlongtobeat.com";
 	private static readonly REFERER_HEADER = HowLongToBeat.BASE_URL;
-	private static readonly SEARCH_URL = `${HowLongToBeat.BASE_URL}/api/lookup`;
+	private static readonly SEARCH_URL = `${HowLongToBeat.BASE_URL}/api/s`;
 	private static readonly GAME_URL = `${HowLongToBeat.BASE_URL}/game`;
 
 	private static readonly API_KEY_CACHE: {
@@ -135,7 +135,7 @@ class HowLongToBeat {
 			return userIdMatch[1];
 		}
 
-		const concatApiKeyPattern = /\/api\/lookup\/"(?:\.concat\("[^"]*"\))*/;
+		const concatApiKeyPattern = /\/api\/s\/"(?:\.concat\("[^"]*"\))*/;
 		const concatMatch = concatApiKeyPattern.exec(scriptContent);
 		if (concatMatch) {
 			const matches = concatMatch[0].split(".concat");
