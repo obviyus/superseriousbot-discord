@@ -4,8 +4,8 @@ import {
 	EmbedBuilder,
 	type SlashCommandBuilder,
 } from "discord.js";
-import { HowLongToBeat, type GameResult } from "~/features/hltb";
 import type { Command } from "~/commands";
+import { search, type GameResult } from "~/features/hltb";
 
 const COLORS = {
 	ERROR: 0xff0000,
@@ -13,34 +13,33 @@ const COLORS = {
 } as const;
 
 const MAX_RESULTS = 10;
-const hltb = new HowLongToBeat();
 
 function createGameEmbed(game: GameResult): EmbedBuilder {
 	const formatTime = (time: number | null): string =>
-		time === null ? "N/A" : `${time} hours`;
+		time === null ? "N/A" : `${Math.round(time / 3600)} hours`;
 
 	return new EmbedBuilder()
 		.setColor(COLORS.PRIMARY)
-		.setTitle(game.name)
+		.setTitle(game.game_name)
 		.addFields(
 			{
 				name: "⚔️ Main Story",
-				value: formatTime(game.mainStory),
+				value: formatTime(game.comp_main),
 				inline: true,
 			},
 			{
 				name: "🎮 Main + Extras",
-				value: formatTime(game.extras),
+				value: formatTime(game.comp_plus),
 				inline: true,
 			},
 			{
 				name: "🏆 Completionist",
-				value: formatTime(game.completionist),
+				value: formatTime(game.comp_100),
 				inline: true,
 			},
 			{
 				name: "📱 Platforms",
-				value: game.platforms.length ? game.platforms.join(", ") : "N/A",
+				value: game.profile_platform || "N/A",
 				inline: false,
 			},
 		)
@@ -55,9 +54,10 @@ function createGameSelector(
 		.setPlaceholder("Choose a game")
 		.addOptions(
 			games.map((game) => ({
-				label: game.name,
-				description: game.platforms.join(", ") || "No platforms listed",
-				value: game.id.toString(),
+				label: game.game_name,
+				description:
+					game.game_alias || game.profile_platform || "No additional info",
+				value: game.game_id.toString(),
 			})),
 		);
 
@@ -81,9 +81,8 @@ export const HowLongToBeatCommand: Command = {
 		const gameName = interaction.options.getString("game", true);
 
 		try {
-			const searchResults = await hltb.search(gameName);
-
-			if (searchResults.Results.length === 0) {
+			const searchResults = await search(gameName);
+			if (!searchResults?.data?.length) {
 				await interaction.editReply({
 					embeds: [
 						new EmbedBuilder()
@@ -95,7 +94,7 @@ export const HowLongToBeatCommand: Command = {
 				return;
 			}
 
-			const topResults = searchResults.Results.slice(0, MAX_RESULTS);
+			const topResults = searchResults.data.slice(0, MAX_RESULTS);
 			const reply = await interaction.editReply({
 				embeds: [
 					new EmbedBuilder()
@@ -106,23 +105,21 @@ export const HowLongToBeatCommand: Command = {
 				components: [createGameSelector(topResults)],
 			});
 
-			// Single collector with auto-cleanup
 			const selection = await reply
 				.awaitMessageComponent({
 					filter: (i) => i.user.id === interaction.user.id,
-					// Component will auto-invalidate after 15 minutes anyway
 					time: 15 * 60 * 1000,
 				})
 				.catch(() => null);
 
 			if (selection?.isStringSelectMenu()) {
 				const selectedGame = topResults.find(
-					(game) => game.id.toString() === selection.values[0],
+					(game) => game.game_id.toString() === selection.values[0],
 				);
 				if (selectedGame) {
 					await selection.update({
 						embeds: [createGameEmbed(selectedGame)],
-						components: [], // Remove the select menu
+						components: [],
 					});
 				}
 			}
