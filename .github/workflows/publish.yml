@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - "master"
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          bun add -g semantic-release @semantic-release/changelog @semantic-release/git @semantic-release/npm @semantic-release/github
+          semantic-release
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ghcr.io/obviyus/superseriousbot-discord:${{ github.sha }}
+            ghcr.io/obviyus/superseriousbot-discord:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
