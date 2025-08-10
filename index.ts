@@ -1,13 +1,14 @@
-import { Client, GatewayIntentBits } from "discord.js";
-import { config } from "dotenv";
-import { ready } from "~/events/ready";
+import { Client, GatewayIntentBits, Partials } from "discord.js";
 import { interactionCreate } from "~/events/interactionCreate";
+import { ready } from "~/events/ready";
+import { AppConfig } from "~/lib/config";
 
-config();
-
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const client = new Client({
+	intents: [GatewayIntentBits.Guilds],
+	partials: [Partials.Channel],
+});
 
 client.once("ready", () => ready(client));
 interactionCreate(client);
 
-client.login(process.env.DISCORD_TOKEN);
+client.login(AppConfig.discordToken);

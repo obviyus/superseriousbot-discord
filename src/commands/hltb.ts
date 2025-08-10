@@ -1,16 +1,12 @@
 import {
 	ActionRowBuilder,
-	StringSelectMenuBuilder,
 	EmbedBuilder,
 	type SlashCommandBuilder,
+	StringSelectMenuBuilder,
 } from "discord.js";
 import type { Command } from "~/commands";
-import { search, type GameResult } from "~/features/hltb";
-
-const COLORS = {
-	ERROR: 0xff0000,
-	PRIMARY: 0x0099ff,
-} as const;
+import { type GameResult, search } from "~/features/hltb";
+import { COLORS, DEFAULT_COMPONENT_TIMEOUT_MS } from "~/lib/constants";
 
 const MAX_RESULTS = 10;
 
@@ -108,7 +104,7 @@ export const HowLongToBeatCommand: Command = {
 			const selection = await reply
 				.awaitMessageComponent({
 					filter: (i) => i.user.id === interaction.user.id,
-					time: 15 * 60 * 1000,
+					time: DEFAULT_COMPONENT_TIMEOUT_MS,
 				})
 				.catch(() => null);
 

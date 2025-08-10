@@ -1,16 +1,24 @@
 {
-  "name": "superseriousbot-discord",
-  "module": "index.ts",
-  "type": "module",
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5.7.2"
-  },
-  "dependencies": {
-    "cheerio": "^1.0.0",
-    "discord.js": "^14.18.0",
-    "dotenv": "^16.5.0"
-  }
+	"name": "superseriousbot-discord",
+	"module": "index.ts",
+	"type": "module",
+	"scripts": {
+		"dev": "bun --watch run index.ts",
+		"build": "echo 'Bun handles TS transpilation at runtime'",
+		"lint": "echo 'No linter configured'",
+		"register:global": "GUILD_ID= bun run index.ts",
+		"register:guild": "bun run index.ts"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.1.4",
+		"@types/bun": "^1.2.19"
+	},
+	"peerDependencies": {
+		"typescript": "^5.7.2"
+	},
+	"dependencies": {
+		"cheerio": "^1.1.2",
+		"discord.js": "^14.21.0",
+		"dotenv": "^17.2.1"
+	}
 }

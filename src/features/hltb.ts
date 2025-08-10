@@ -304,6 +304,9 @@ export async function search(
 	searchModifiers = SearchModifiers.NONE,
 	page = 1,
 ): Promise<SearchResults | null> {
+	if (!gameName || gameName.trim().length === 0) {
+		return null;
+	}
 	let searchInfo = await fetchSearchInfo(false); // Try specific scripts first
 	if (!searchInfo?.apiKey) {
 		console.log("API Key not found in _app- scripts, trying all scripts...");
