@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/obviyus/superseriousbot-discord/compare/v1.0.0...v1.0.1) (2025-09-17)
+
+
+### Bug Fixes
+
+* clamp message to work with Discord ([1625ff7](https://github.com/obviyus/superseriousbot-discord/commit/1625ff724119d53dee390334c5c79f30692fabd3))
+
 # 1.0.0 (2025-08-10)
 
 
