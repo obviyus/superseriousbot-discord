@@ -4,21 +4,18 @@
 	"type": "module",
 	"scripts": {
 		"dev": "bun --watch run index.ts",
-		"build": "echo 'Bun handles TS transpilation at runtime'",
-		"lint": "echo 'No linter configured'",
-		"register:global": "GUILD_ID= bun run index.ts",
-		"register:guild": "bun run index.ts"
+		"lint": "bunx biome check --fix ./src --unsafe"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.1.4",
-		"@types/bun": "^1.2.19"
+		"@biomejs/biome": "^2.2.4",
+		"@types/bun": "^1.2.22"
 	},
 	"peerDependencies": {
 		"typescript": "^5.7.2"
 	},
 	"dependencies": {
 		"cheerio": "^1.1.2",
-		"discord.js": "^14.21.0",
-		"dotenv": "^17.2.1"
+		"discord.js": "^14.22.1",
+		"dotenv": "^17.2.2"
 	}
 }
