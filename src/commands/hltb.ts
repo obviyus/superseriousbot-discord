@@ -45,14 +45,22 @@ function createGameEmbed(game: GameResult): EmbedBuilder {
 function createGameSelector(
 	games: GameResult[],
 ): ActionRowBuilder<StringSelectMenuBuilder> {
+	const clampToOptionLimit = (value: string): string =>
+		value.length <= 100 ? value : `${value.slice(0, 97)}...`;
+
 	const selectMenu = new StringSelectMenuBuilder()
 		.setCustomId("select_game")
 		.setPlaceholder("Choose a game")
 		.addOptions(
 			games.map((game) => ({
-				label: game.game_name,
-				description:
-					game.game_alias || game.profile_platform || "No additional info",
+				label: clampToOptionLimit(game.game_name.trim()),
+				description: (() => {
+					const enrichedDescription =
+						game.game_alias?.trim() ||
+						game.profile_platform?.replace(/\s+/g, " ").trim() ||
+						"No additional info";
+					return clampToOptionLimit(enrichedDescription);
+				})(),
 				value: game.game_id.toString(),
 			})),
 		);
