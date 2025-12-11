@@ -1,7 +1,3 @@
-import { config as dotenvConfig } from "dotenv";
-
-dotenvConfig();
-
 function getEnv(
 	name: string,
 	options?: { required?: boolean },
