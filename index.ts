@@ -8,7 +8,7 @@ const client = new Client({
 	partials: [Partials.Channel],
 });
 
-client.once("ready", () => ready(client));
+client.once("clientReady", () => ready(client));
 interactionCreate(client);
 
 client.login(AppConfig.discordToken);
