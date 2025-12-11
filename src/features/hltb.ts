@@ -74,8 +74,11 @@ async function fetchSearchUrl(): Promise<string> {
 		const appScripts: string[] = [];
 		const otherScripts: string[] = [];
 
-		let match: RegExpExecArray | null;
-		while ((match = scriptPattern.exec(html)) !== null) {
+		for (
+			let match = scriptPattern.exec(html);
+			match !== null;
+			match = scriptPattern.exec(html)
+		) {
 			const src = match[1];
 			const fullUrl = new URL(src, BASE_URL).toString();
 			if (src.includes("_app-")) {
