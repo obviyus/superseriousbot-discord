@@ -20,4 +20,8 @@ DISCORD_TOKEN=your_token_here
 GUILD_ID=123456789012345678
 ```
 
-This project was created using `bun init` in bun v1.1.38. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+To build and run with Docker:
+
+```bash
+docker build -t superseriousbot-discord . && docker run -d -e DISCORD_TOKEN=your_token_here superseriousbot-discord
+```

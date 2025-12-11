@@ -1,12 +1,16 @@
-FROM oven/bun:latest
+FROM oven/bun:latest AS builder
 
 WORKDIR /app
 
-ENV NODE_ENV=production
-
-COPY bun.lockb package.json ./
-RUN bun install --frozen-lockfile --production
+COPY bun.lock package.json ./
+RUN bun install --frozen-lockfile
 
 COPY . .
 
-CMD ["bun", "run", "index.ts"]
+RUN bun build --compile --minify --sourcemap ./index.ts --outfile bot
+
+FROM gcr.io/distroless/cc-debian12
+
+COPY --from=builder /app/bot /bot
+
+CMD ["/bot"]
