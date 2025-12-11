@@ -1,3 +1,16 @@
+# [1.1.0](https://github.com/obviyus/superseriousbot-discord/compare/v1.0.1...v1.1.0) (2025-12-11)
+
+
+### Bug Fixes
+
+* **hltb:** use auth token for API requests ([b08071c](https://github.com/obviyus/superseriousbot-discord/commit/b08071c26bc632c1a980f11f6e26c5994491fcb5))
+* update event name from "ready" to "clientReady" for consistency ([706e15f](https://github.com/obviyus/superseriousbot-discord/commit/706e15fa4732cbb44e4524b355c6e55ed9634101))
+
+
+### Features
+
+* optimized Dockerfile ([22ce95e](https://github.com/obviyus/superseriousbot-discord/commit/22ce95e006fb0bcf2e2de93e0a7e6ecd5cd0a89b))
+
 ## [1.0.1](https://github.com/obviyus/superseriousbot-discord/compare/v1.0.0...v1.0.1) (2025-09-17)
 
 
