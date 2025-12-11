@@ -4,7 +4,8 @@
 	"type": "module",
 	"scripts": {
 		"dev": "bun --watch run index.ts",
-		"lint": "bunx biome check --fix ./src --unsafe"
+		"lint": "bunx biome check --fix ./src --unsafe",
+		"start": "bun run index.ts"
 	},
 	"dependencies": {
 		"discord.js": "^14.25.1"
