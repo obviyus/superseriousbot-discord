@@ -12,20 +12,18 @@ jobs:
   release:
     name: Create Release
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v6
         with:
-          bun-version: latest
+          node-version: 24
 
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          bun add -g semantic-release @semantic-release/changelog @semantic-release/git @semantic-release/npm @semantic-release/github
+          npm install -g semantic-release @semantic-release/changelog @semantic-release/git
           semantic-release
 
   build:
