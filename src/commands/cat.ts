@@ -1,6 +1,7 @@
-import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
+import { EmbedBuilder } from "discord.js";
 import type { Command } from "~/commands";
-import { COLORS } from "~/lib/constants";
+
+const COLORS = { ERROR: 0xff0000, PRIMARY: 0x0099ff } as const;
 
 interface CatAPIResponse {
 	height: number;
@@ -18,9 +19,6 @@ async function fetchCatImage(): Promise<string> {
 export const CatCommand: Command = {
 	name: "cat",
 	description: "Get a random cat image",
-	data: new SlashCommandBuilder()
-		.setName("cat")
-		.setDescription("Get a random cat image"),
 	execute: async (interaction) => {
 		await interaction.deferReply();
 

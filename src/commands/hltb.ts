@@ -6,8 +6,9 @@ import {
 } from "discord.js";
 import type { Command } from "~/commands";
 import { type GameResult, search } from "~/features/hltb";
-import { COLORS, DEFAULT_COMPONENT_TIMEOUT_MS } from "~/lib/constants";
 
+const COLORS = { ERROR: 0xff0000, PRIMARY: 0x0099ff } as const;
+const COMPONENT_TIMEOUT_MS = 15 * 60 * 1000;
 const MAX_RESULTS = 10;
 
 function createGameEmbed(game: GameResult): EmbedBuilder {
@@ -18,23 +19,15 @@ function createGameEmbed(game: GameResult): EmbedBuilder {
 		.setColor(COLORS.PRIMARY)
 		.setTitle(game.game_name)
 		.addFields(
+			{ name: "Main Story", value: formatTime(game.comp_main), inline: true },
 			{
-				name: "⚔️ Main Story",
-				value: formatTime(game.comp_main),
-				inline: true,
-			},
-			{
-				name: "🎮 Main + Extras",
+				name: "Main + Extras",
 				value: formatTime(game.comp_plus),
 				inline: true,
 			},
+			{ name: "Completionist", value: formatTime(game.comp_100), inline: true },
 			{
-				name: "🏆 Completionist",
-				value: formatTime(game.comp_100),
-				inline: true,
-			},
-			{
-				name: "📱 Platforms",
+				name: "Platforms",
 				value: game.profile_platform || "N/A",
 				inline: false,
 			},
@@ -45,22 +38,19 @@ function createGameEmbed(game: GameResult): EmbedBuilder {
 function createGameSelector(
 	games: GameResult[],
 ): ActionRowBuilder<StringSelectMenuBuilder> {
-	const clampToOptionLimit = (value: string): string =>
-		value.length <= 100 ? value : `${value.slice(0, 97)}...`;
+	const clamp = (v: string) => (v.length <= 100 ? v : `${v.slice(0, 97)}...`);
 
 	const selectMenu = new StringSelectMenuBuilder()
 		.setCustomId("select_game")
 		.setPlaceholder("Choose a game")
 		.addOptions(
 			games.map((game) => ({
-				label: clampToOptionLimit(game.game_name.trim()),
-				description: (() => {
-					const enrichedDescription =
-						game.game_alias?.trim() ||
-						game.profile_platform?.replace(/\s+/g, " ").trim() ||
-						"No additional info";
-					return clampToOptionLimit(enrichedDescription);
-				})(),
+				label: clamp(game.game_name.trim()),
+				description: clamp(
+					game.game_alias?.trim() ||
+					game.profile_platform?.replace(/\s+/g, " ").trim() ||
+					"No additional info",
+				),
 				value: game.game_id.toString(),
 			})),
 		);
@@ -112,7 +102,7 @@ export const HowLongToBeatCommand: Command = {
 			const selection = await reply
 				.awaitMessageComponent({
 					filter: (i) => i.user.id === interaction.user.id,
-					time: DEFAULT_COMPONENT_TIMEOUT_MS,
+					time: COMPONENT_TIMEOUT_MS,
 				})
 				.catch(() => null);
 
