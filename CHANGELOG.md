@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/obviyus/superseriousbot-discord/compare/v1.1.0...v1.1.1) (2026-08-17)
+
+
+### Bug Fixes
+
+* update HowLongToBeat search authentication ([068db6e](https://github.com/obviyus/superseriousbot-discord/commit/068db6ef0e898e93672d04a0659de958585aba04))
+
 # [1.1.0](https://github.com/obviyus/superseriousbot-discord/compare/v1.0.1...v1.1.0) (2025-12-11)
 
 
