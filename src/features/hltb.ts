@@ -1,7 +1,5 @@
 const BASE_URL = "https://howlongtobeat.com/";
 const REFERER_HEADER = BASE_URL;
-const AUTH_TOKEN_URL = `${BASE_URL}api/search/init`;
-const FALLBACK_SEARCH_URL = `${BASE_URL}api/search`;
 
 // AIDEV-NOTE: User agents to rotate - helps avoid being blocked by HLTB
 const USER_AGENTS = [
@@ -13,6 +11,10 @@ const USER_AGENTS = [
 
 function getRandomUserAgent(): string {
 	return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === "object" && value !== null;
 }
 
 /**
@@ -29,45 +31,66 @@ function extractSearchUrl(scriptContent: string): string | null {
 			? pathSuffix.split("/")[0]
 			: pathSuffix;
 
-		if (basePath !== "find") {
-			return `/api/${basePath}`;
-		}
+		return `/api/${basePath}`;
 	}
 
 	return null;
 }
 
-async function fetchAuthToken(): Promise<string | null> {
-	const url = `${AUTH_TOKEN_URL}?t=${Date.now()}`;
+interface SearchAuth {
+	key: string;
+	token: string;
+	value: string;
+}
+
+function parseSearchAuth(value: unknown): SearchAuth | null {
+	if (
+		!isRecord(value) ||
+		typeof value.token !== "string" ||
+		typeof value.hpKey !== "string" ||
+		typeof value.hpVal !== "string"
+	) {
+		return null;
+	}
+
+	return { key: value.hpKey, token: value.token, value: value.hpVal };
+}
+
+async function fetchSearchAuth(
+	searchUrl: string,
+	userAgent: string,
+): Promise<SearchAuth | null> {
+	const url = `${searchUrl.replace(/\/$/, "")}/init?t=${Date.now()}`;
 
 	try {
 		const response = await fetch(url, {
-			headers: { "User-Agent": getRandomUserAgent(), referer: REFERER_HEADER },
+			headers: { "User-Agent": userAgent, referer: REFERER_HEADER },
 		});
 
 		if (!response.ok) {
-			console.error(`Failed to fetch auth token: ${response.status}`);
+			console.error(`Failed to fetch search auth: ${response.status}`);
 			return null;
 		}
 
-		const data = (await response.json()) as { token?: string };
-		return data.token ?? null;
+		const auth = parseSearchAuth(await response.json());
+		if (!auth) console.error("Invalid search auth response");
+		return auth;
 	} catch (error) {
-		console.error("Error fetching auth token:", error);
+		console.error("Error fetching search auth:", error);
 		return null;
 	}
 }
 
 // AIDEV-NOTE: HLTB has no public API - this scrapes their JS to find the dynamic search endpoint
-async function fetchSearchUrl(): Promise<string> {
+async function fetchSearchUrl(userAgent: string): Promise<string | null> {
 	const headers = {
-		"User-Agent": getRandomUserAgent(),
+		"User-Agent": userAgent,
 		referer: REFERER_HEADER,
 	};
 
 	try {
 		const response = await fetch(BASE_URL, { headers });
-		if (!response.ok) return FALLBACK_SEARCH_URL;
+		if (!response.ok) return null;
 
 		const html = await response.text();
 		const scriptPattern = /<script[^>]+src=["']([^"']+)["'][^>]*>/gi;
@@ -106,10 +129,14 @@ async function fetchSearchUrl(): Promise<string> {
 		console.error("Error fetching search URL:", error);
 	}
 
-	return FALLBACK_SEARCH_URL;
+	return null;
 }
 
-function getSearchRequestData(gameName: string, page: number): string {
+function getSearchRequestData(
+	gameName: string,
+	page: number,
+	auth: SearchAuth,
+): string {
 	return JSON.stringify({
 		searchType: "games",
 		searchTerms: gameName.split(" "),
@@ -133,6 +160,7 @@ function getSearchRequestData(gameName: string, page: number): string {
 			randomizer: 0,
 		},
 		useCache: true,
+		[auth.key]: auth.value,
 	});
 }
 
@@ -147,16 +175,26 @@ export interface GameResult {
 }
 
 interface SearchResults {
-	color: string;
-	title: string;
-	category: string;
-	count: number;
-	pageCurrent: number;
-	pageTotal: number;
-	pageSize: number;
 	data: GameResult[];
-	userData: unknown[];
-	displayModifier: string | null;
+}
+
+function isGameResult(value: unknown): value is GameResult {
+	return (
+		isRecord(value) &&
+		typeof value.game_id === "number" &&
+		typeof value.game_name === "string" &&
+		typeof value.game_alias === "string" &&
+		typeof value.comp_main === "number" &&
+		typeof value.comp_plus === "number" &&
+		typeof value.comp_100 === "number" &&
+		typeof value.profile_platform === "string"
+	);
+}
+
+function parseSearchResults(value: unknown): SearchResults | null {
+	if (!isRecord(value) || !Array.isArray(value.data)) return null;
+	if (!value.data.every(isGameResult)) return null;
+	return { data: value.data };
 }
 
 export async function search(
@@ -165,28 +203,35 @@ export async function search(
 ): Promise<SearchResults | null> {
 	if (!gameName?.trim()) return null;
 
-	const [authToken, searchUrl] = await Promise.all([
-		fetchAuthToken(),
-		fetchSearchUrl(),
-	]);
+	const userAgent = getRandomUserAgent();
+	const searchUrl = await fetchSearchUrl(userAgent);
+	if (!searchUrl) return null;
+
+	const auth = await fetchSearchAuth(searchUrl, userAgent);
+	if (!auth) return null;
 
 	const headers: HeadersInit = {
 		"content-type": "application/json",
 		accept: "*/*",
-		"User-Agent": getRandomUserAgent(),
+		"User-Agent": userAgent,
 		referer: REFERER_HEADER,
+		Origin: REFERER_HEADER,
+		"x-auth-token": auth.token,
+		"x-hp-key": auth.key,
+		"x-hp-val": auth.value,
 	};
-	if (authToken) headers["x-auth-token"] = authToken;
 
 	try {
 		const response = await fetch(searchUrl, {
 			method: "POST",
 			headers,
-			body: getSearchRequestData(gameName, page),
+			body: getSearchRequestData(gameName, page, auth),
 		});
 
 		if (response.ok) {
-			return (await response.json()) as SearchResults;
+			const results = parseSearchResults(await response.json());
+			if (!results) console.error("Invalid search response");
+			return results;
 		}
 
 		console.error(`Search failed: ${response.status} ${response.statusText}`);
