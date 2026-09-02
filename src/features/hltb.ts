@@ -20,18 +20,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 /**
  * Extracts the search URL from script content by finding POST fetch calls to /api/
  */
-function extractSearchUrl(scriptContent: string): string | null {
+export function extractSearchUrl(scriptContent: string): string | null {
 	const pattern =
 		/fetch\s*\(\s*["']\/api\/([a-zA-Z0-9_/]+)[^"']*["']\s*,\s*\{[^}]*method:\s*["']POST["'][^}]*\}/gi;
 
 	const match = pattern.exec(scriptContent);
 	if (match) {
-		const pathSuffix = match[1];
-		const basePath = pathSuffix.includes("/")
-			? pathSuffix.split("/")[0]
-			: pathSuffix;
-
-		return `/api/${basePath}`;
+		const pathSuffix = match[1].replace(/\/+$/, "");
+		return `/api/${pathSuffix}`;
 	}
 
 	return null;
