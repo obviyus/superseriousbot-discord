@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/obviyus/superseriousbot-discord/compare/v1.1.1...v1.1.2) (2026-09-02)
+
+
+### Bug Fixes
+
+* preserve nested HowLongToBeat search routes ([70e6c65](https://github.com/obviyus/superseriousbot-discord/commit/70e6c653b707942489e1ff6744915aa4b0cd26b8))
+
 ## [1.1.1](https://github.com/obviyus/superseriousbot-discord/compare/v1.1.0...v1.1.1) (2026-08-17)
 
 
